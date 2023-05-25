@@ -103,6 +103,67 @@ Finally, similar to SKLearn's pipeline, the `feature_pipeline` can be used to in
 Xinv, _ ,_ = feature_pipeline.inverse_transform(X)
 ```
 
+## Data removal
+
+The command `feature_pipeline.fit_transform(X, y, sample_weight)` fits each pipeline step to `X`, and transforms `X` according to each step's `transform()` method. In some cases, this will not affect `y` or `sample_weight`. For example, `FlowdaptMinMaxScaler` simply scales `X` and saves the normalization information.  Meanwhile, in the `SVMOutlierExtractor`, `.fit()` will fit an SVM to `X` and `.transform()` will remove any detected outliers from `X`. Typical `Scikit-Learn` pipelines do not remove those data points from `y` and `sample_weight`. Luckily, the `FlowdaptPipeline` takes care of the "associated removal" of the same outlier data points from `y` and `sample_weight`. 
+
+## Feature modification
+
+Another feature is demonstrated in the `FlowdaptPCA`, which fits a PCA transform to `X` and then transforms `X` to principal components. This dimensionality reduction means that the features are no longer the same, instead they are now `PC1`, `PC2` ... `PCX`. `FlowdaptPipeline` handles the feature renaming at that step (which is not a feature available in the `Scikit-Learn` pipeline). Similar to `FlowdaptPCA`, the `FlowdaptVarianceThreshold` subclasses the `Scikit-Learn` `VarianceThreshold` which is geared toward removing features that have a low variance. `FlowdaptVarianceThreshold` ensures that the removed features are properly handled when `X` passes through this part of the pipeline.
+
+## Adding a custom step
+
+Each step of the `Pipeline` *must* contain the following methods:
+
+```python
+class MyTransformer:
+    def fit_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
+        X, y, sample_weight = self.fit(X, y, sample_weight)
+        X, y, sample_weight = self.transform(X, y, sample_weight)
+        return X, y, sample_weight, feature_list
+
+    def fit(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
+        return X, y, sample_weight, feature_list
+
+    def transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
+        return X, y, sample_weight, feature_list
+
+    def inverse_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
+        return X, y, sample_weight, feature_list
+```
+
+This is because these four methods are called automatically by the `Pipeline` object. In most cases, the goal is to add functionality for an existing transformer from the `Scikit-Learn` library. Here is an example of subclassing the `MinMaxScaler` to work with the `FlowdaptPipeline`:
+
+```python
+class DataSieveMinMaxScaler(MinMaxScaler):
+    """
+    A subclass of the SKLearn MinMaxScaler that ensures fit, transform, fit_transform and
+    inverse_transform all take the full set of params X, y, sample_weight (even if they
+    are unused) to follow the FlowdaptPipeline API.
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def fit_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
+        super().fit(X)
+        X = super().transform(X)
+        return X, y, sample_weight, feature_list
+
+    def fit(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
+        super().fit(X)
+        return X, y, sample_weight, feature_list
+
+    def transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
+        X = super().transform(X)
+        return X, y, sample_weight, feature_list
+
+    def inverse_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
+        return super().inverse_transform(X), y, sample_weight, feature_list
+```
+
+
+
 # Installation
 
 The easiest way to install `datasieve` is with:
@@ -118,6 +179,7 @@ git clone https://github.com/emergentmethods/datasieve.git
 cd datasieve
 poetry install
 ```
+
 
 # License
 
