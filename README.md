@@ -103,6 +103,21 @@ Finally, similar to SKLearn's pipeline, the `feature_pipeline` can be used to in
 Xinv, _ ,_ = feature_pipeline.inverse_transform(X)
 ```
 
+# Installation
+
+The easiest way to install `datasieve` is with:
+
+```
+pip install datasieve
+```
+
+but you can also clone this repository and install it with:
+
+```
+git clone https://github.com/emergentmethods/datasieve.git
+cd datasieve
+poetry install
+```
 
 # License
 
