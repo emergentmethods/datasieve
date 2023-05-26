@@ -49,7 +49,7 @@ class SVMOutlierExtractor(SGDOneClassSVM):
         num_tossed = len(y_pred) - len(X)
         if num_tossed > 0:
             logger.info(
-                f"SVM detected {num_tossed} data points"
+                f"SVM detected {num_tossed} data points "
                 "as outliers."
             )
 
@@ -75,9 +75,9 @@ The user builds the pipeline similarly to SKLearn:
 
     feature_pipeline = Pipeline([
         ("detect_constants", DataSieveVarianceThreshold(threshold=0)),
-        ("pre_svm_scaler", DataSieveMinMaxScaler(feature_range=(-1, 1)))
+        ("pre_svm_scaler", DataSieveMinMaxScaler(feature_range=(-1, 1))),
         ("svm", SVMOutlierExtractor()),
-        ("pre_pca_scaler", DataSieveMinMaxScaler(feature_range=(-1, 1)))
+        ("pre_pca_scaler", DataSieveMinMaxScaler(feature_range=(-1, 1))),
         ("pca", DataSievePCA(n_components=0.95),
         ("post_pca_scaler", DataSieveMinMaxScaler(feature_range=(-1, 1)))
     ])

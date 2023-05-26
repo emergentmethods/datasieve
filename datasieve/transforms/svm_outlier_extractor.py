@@ -33,7 +33,7 @@ class SVMOutlierExtractor(SGDOneClassSVM):
             num_tossed = len(y_pred) - len(X)
             if num_tossed > 0:
                 logger.info(
-                    f"SVM detected {num_tossed} data points"
+                    f"SVM detected {num_tossed} data points "
                     "as outliers."
                 )
         else:
