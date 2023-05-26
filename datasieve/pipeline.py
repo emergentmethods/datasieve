@@ -30,6 +30,13 @@ class Pipeline:
                 fitparams[name] = {}  # add an empty dict
 
         return fitparams
+    
+    def get_step(self, name: str):
+        for _, (step_name, step) in enumerate(self.steps):
+            if step_name == name:
+                return step
+
+        raise Exception(f"Step {name} not found in pipeline")
 
     def fit_transform(self, X, y=None, sample_weight=None) -> Tuple[npt.ArrayLike,
                                                                     npt.ArrayLike,
