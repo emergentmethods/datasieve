@@ -16,15 +16,18 @@ class DissimilarityIndex:
     identify and remove outliers
     """
 
-    def __init__(self, di_threshold: float = 1, **kwargs):
+    def __init__(self, di_threshold: float = 1, n_jobs=-1, backend="loky", **kwargs):
         self.avg_mean_dist: float = 0
         self.trained_data: npt.ArrayLike = np.array([])
         self.di_threshold = di_threshold
         self.di_values: npt.ArrayLike = np.array([])
+        self.n_jobs = n_jobs
+        self.backend = backend
 
     def fit_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
         self.fit(X, y, sample_weight)
-        X, y, sample_weight, feature_list = self.transform(X, y, sample_weight, feature_list)
+        X, y, sample_weight, feature_list = self.transform(
+            X, y, sample_weight, feature_list)
         return X, y, sample_weight, feature_list
 
     def fit(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
@@ -33,7 +36,7 @@ class DissimilarityIndex:
         and save the trained_data array for future use
         """
 
-        with parallel_backend("loky", n_jobs=4):
+        with parallel_backend(self.backend, n_jobs=self.n_jobs):
             pairwise = pairwise_distances(X)
 
         # remove the diagonal distances which are itself distances ~0
@@ -52,7 +55,7 @@ class DissimilarityIndex:
         from the training data set.
         """
 
-        with parallel_backend("dask", n_jobs=4):
+        with parallel_backend(self.backend, n_jobs=self.n_jobs):
             distance = pairwise_distances(self.trained_data, X)
 
         self.di_values = distance.min(axis=0) / self.avg_mean_dist

@@ -21,9 +21,11 @@ class DataSieveDBSCAN(DBSCAN):
     are outliers.
     """
 
-    def __init__(self, **kwargs) -> None:
+    def __init__(self, backend="loky", n_jobs=-1, **kwargs) -> None:
         super().__init__(**kwargs)
         self.train_features: npt.ArrayLike = np.array([])
+        self.backend = backend
+        self.n_jobs = n_jobs
 
     def fit_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
         self.fit(X, y, sample_weight)
@@ -55,7 +57,7 @@ class DataSieveDBSCAN(DBSCAN):
         self.eps, self.min_samples = self.compute_epsilon_and_minpts(X)
         logger.info(f"Found eps {self.eps} and min_samples {self.min_samples} in fit")
 
-        with parallel_backend("dask", n_jobs=4):
+        with parallel_backend(self.backend, n_jobs=self.n_jobs):
             super().fit(X)
 
         self.train_features = X
@@ -71,7 +73,7 @@ class DataSieveDBSCAN(DBSCAN):
         num_X = X.shape[0]
         fullX = np.concatenate([self.train_features, X], axis=0)
 
-        with parallel_backend("dask", n_jobs=4):
+        with parallel_backend(self.backend, n_jobs=self.n_jobs):
             logger.info(f"Using eps {self.eps} and min_samples {self.min_samples} to transform")
             clustering = super().fit(fullX)
 
@@ -114,7 +116,7 @@ class DataSieveDBSCAN(DBSCAN):
         MinPts = int(X.shape[0] * 0.25)
 
         # measure pairwise distances to nearest neighbours
-        with parallel_backend("dask", n_jobs=4):
+        with parallel_backend(self.backend, n_jobs=self.n_jobs):
             neighbors = NearestNeighbors(n_neighbors=MinPts)
             neighbors_fit = neighbors.fit(X)
             distances, _ = neighbors_fit.kneighbors(X)

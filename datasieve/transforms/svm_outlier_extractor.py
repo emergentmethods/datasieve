@@ -17,7 +17,7 @@ class SVMOutlierExtractor(SGDOneClassSVM):
 
     def fit_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
         self.fit(X, y, sample_weight=sample_weight)
-        return self.transform(X, y, sample_weight=sample_weight)
+        return self.transform(X, y, sample_weight, feature_list)
 
     def fit(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
         super().fit(X, y=y, sample_weight=sample_weight)

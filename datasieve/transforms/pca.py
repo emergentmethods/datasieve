@@ -34,4 +34,4 @@ class DataSievePCA(PCA):
         return X, y, sample_weight, self.feature_list
 
     def inverse_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
-        return super().inverse_transform(X), y, sample_weight
+        return super().inverse_transform(X), y, sample_weight, feature_list

@@ -29,7 +29,8 @@ def remove_outliers(X, y=None, sample_weight=None, inliers=None):
     return X, y, sample_weight
 
 
-def find_training_horizon(df: pd.DataFrame, target_horizon, test_pct=0.05, threshold=0.25e-3):
+def find_training_horizon(df: pd.DataFrame, target_horizon, test_pct=0.05,
+                          threshold=0.25e-3, backend="loky", n_jobs=-1):
     """
     Given a set of raw data, determine the necessariy training horizon
     associated to the target horizon
@@ -46,7 +47,7 @@ def find_training_horizon(df: pd.DataFrame, target_horizon, test_pct=0.05, thres
 
     for t in np.arange(0, max_window, step_size):
         current_window = df.iloc[-target_horizon-t:]
-        with parallel_backend("loky", n_jobs=8):
+        with parallel_backend(backend, n_jobs=n_jobs):
             current_window_distances = pairwise_distances(
                 current_window, metric="euclidean", n_jobs=8)
             # remove the diagonal distances which are itself distances ~0

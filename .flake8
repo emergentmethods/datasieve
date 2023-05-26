@@ -1,0 +1,7 @@
+[flake8]
+ignore = E226,E302,E41,W504
+max-line-length = 100
+exclude = 
+    tests/*
+    flowdapt/migrate
+max-complexity = 15
