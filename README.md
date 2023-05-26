@@ -15,6 +15,7 @@ The main **difference** is that DataSieve allows for the manipulation of the y a
 - change feature column names at certain transformations (e.g. PCA)
 - passing dynamic parameters to individual transforms of the pipeline
 - passing dataframes/arrays without worrying about converting to arrays and maintaining the proper feature columns
+- customizing backend for parallelization (e.g. Dask, Ray, loky, etc.)
 
 These improved flexibilities allow for more customized/creative transformations. For example, the included `DataSieveDBSCAN` has automated parameter fitting and outlier removal based on clustering. 
 

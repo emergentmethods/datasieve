@@ -19,9 +19,13 @@ class DataSieveVarianceThreshold(VarianceThreshold):
     def fit(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
         super().fit(X)
         self.mask = self.get_support()
-        self.feature_list = np.array(feature_list)[self.mask]
-        logger.info(f"Variance will remove features {len(feature_list) - len(self.feature_list)} "
-                    f"on transform. {np.array(feature_list)[~self.mask]}")
+        if feature_list is not None:
+            self.feature_list = np.array(feature_list)[self.mask]
+            logger.info("Variance will remove features "
+                        f"{len(feature_list) - len(self.feature_list)} "
+                        f"on transform. {np.array(feature_list)[~self.mask]}")
+        else:
+            self.feature_list = None
 
         return X, y, sample_weight, self.feature_list
 
