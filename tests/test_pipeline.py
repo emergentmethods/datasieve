@@ -61,3 +61,24 @@ def test_pipeline_array_in_out(dummy_array_without_nans):
 
     assert type(X_t) == np.ndarray
     assert type(Y_t) == np.ndarray
+
+
+def test_check_outliers(dummy_array_without_nans):
+    """
+    Create pipeline and pass a dummy df through
+    """
+
+    pipeline = Pipeline([
+        ("pre_svm_scaler", transforms.DataSieveMinMaxScaler(feature_range=(-1, 1))),
+        ("svm", transforms.SVMOutlierExtractor(nu=0.01, shuffle=True, random_state=42))
+    ])
+
+    X = dummy_array_without_nans.copy()
+
+    pipeline.fit(X)
+
+    X, outliers, _ = pipeline.transform(X, outlier_check=True)
+
+    assert X.shape[0] == dummy_array_without_nans.shape[0]
+    assert outliers.sum() == 21
+    assert outliers.sum() < X.shape[0]

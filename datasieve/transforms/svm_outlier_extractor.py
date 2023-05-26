@@ -1,6 +1,7 @@
 from sklearn.linear_model import SGDOneClassSVM
 from datasieve.utils import remove_outliers
 import logging
+import numpy as np
 
 logger = logging.getLogger('datasieve.pipeline')
 
@@ -23,17 +24,21 @@ class SVMOutlierExtractor(SGDOneClassSVM):
         super().fit(X, y=y, sample_weight=sample_weight)
         return X, y, sample_weight, feature_list
 
-    def transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
+    def transform(self, X, y=None, sample_weight=None, feature_list=None,
+                  outlier_check=False, **kwargs):
         y_pred = self.predict(X)
-
-        X, y, sample_weight = remove_outliers(X, y, sample_weight, y_pred)
-
-        num_tossed = len(y_pred) - len(X)
-        if num_tossed > 0:
-            logger.info(
-                f"SVM detected {num_tossed} data points"
-                "as outliers."
-            )
+        y_pred = np.where(y_pred == -1, 0, y_pred)
+        if not outlier_check:
+            X, y, sample_weight = remove_outliers(X, y, sample_weight, y_pred)
+            num_tossed = len(y_pred) - len(X)
+            if num_tossed > 0:
+                logger.info(
+                    f"SVM detected {num_tossed} data points"
+                    "as outliers."
+                )
+        else:
+            y += y_pred
+            y -= 1
 
         return X, y, sample_weight, feature_list
 

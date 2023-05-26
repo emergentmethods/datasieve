@@ -10,7 +10,8 @@ logger = logging.getLogger('datasieve.pipeline')
 
 class Pipeline:
 
-    def __init__(self, steps: List[Tuple] = [], fitparams: dict[str, dict] = {}):
+    def __init__(self, steps: List[Tuple] = [],
+                 fitparams: dict[str, dict] = {}):
         """
         Pipeline object which holds a list of fit/transform objects.
         :param steps: list of tuples (str, transform())
@@ -54,10 +55,10 @@ class Pipeline:
 
         return X, y, sample_weight
 
-    def transform(self, X, y=None, sample_weight=None) -> Tuple[npt.ArrayLike,
+    def transform(self, X, y=None, sample_weight=None, outlier_check=False) -> Tuple[npt.ArrayLike,
                                                                 npt.ArrayLike,
                                                                 npt.ArrayLike]:
-        X, y, sample_weight = self._validate_arguments(X, y, sample_weight)
+        X, y, sample_weight = self._validate_arguments(X, y, sample_weight, outlier_check=outlier_check)
         feature_list = copy.deepcopy(self.feature_list)
 
         for _, (name, trans) in enumerate(self.steps):
@@ -67,6 +68,7 @@ class Pipeline:
                 y,
                 sample_weight=sample_weight,
                 feature_list=feature_list,
+                outlier_check=outlier_check,
                 **self.fitparams[name]
             )
 
@@ -110,7 +112,8 @@ class Pipeline:
 
         return X, y, sample_weight
 
-    def _validate_arguments(self, X, y, sample_weight, fit=False):
+    # flake8: noqa: C901
+    def _validate_arguments(self, X, y, sample_weight, fit=False, outlier_check=False):
         if isinstance(X, pd.DataFrame) and fit:
             self.pandas_types = True
             self.feature_list = X.columns
@@ -141,6 +144,18 @@ class Pipeline:
 
         if isinstance(sample_weight, pd.DataFrame) and sample_weight is not None:
             sample_weight = sample_weight.to_numpy()
+
+        if not fit and outlier_check:
+            if y is not None:
+                raise Exception("Asking for outlier_check vector, but passed in y."
+                                "outlier_check functionality only works when passing X"
+                                "for pipeline.transform(X)")
+            else:
+                y = np.ones(X.shape[0])
+
+        if fit and outlier_check:
+            raise Exception("Asking for outlier_check with fit() is not possible."
+                            "outlier_check functionality only works with transform.")
 
         return X, y, sample_weight
 
