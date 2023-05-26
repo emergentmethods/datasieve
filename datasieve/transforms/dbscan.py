@@ -64,7 +64,8 @@ class DataSieveDBSCAN(DBSCAN):
 
         return X, y, sample_weight, feature_list
 
-    def transform(self, X, y=None, sample_weight=None, feature_list=None, outlier_check=False, **kwargs):
+    def transform(self, X, y=None, sample_weight=None, feature_list=None,
+                  outlier_check=False, **kwargs):
         """
         Given a data point (or data points), append them to the
         train_features and determine if they are inliers.
