@@ -47,7 +47,8 @@ class DissimilarityIndex:
 
         return X, y, sample_weight, feature_list
 
-    def transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
+    def transform(self, X, y=None, sample_weight=None,
+                  feature_list=None, outlier_check=False, **kwargs):
         """
         Compares the distance from each prediction point to each training data
         point. It uses this information to estimate a Dissimilarity Index (DI)
@@ -61,7 +62,11 @@ class DissimilarityIndex:
         self.di_values = distance.min(axis=0) / self.avg_mean_dist
         y_pred = np.where(self.di_values < self.di_threshold, 1, 0)
 
-        X, y, sample_weight = remove_outliers(X, y, sample_weight, y_pred)
+        if not outlier_check:
+            X, y, sample_weight = remove_outliers(X, y, sample_weight, y_pred)
+        else:
+            y += y_pred
+            y -= 1
 
         num_tossed = len(y_pred) - len(X)
         if num_tossed > 0:

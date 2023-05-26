@@ -13,6 +13,7 @@ The main **difference** is that DataSieve allows for the manipulation of the y a
 - removing outliers across your X, y, and sample_weights arrays according to simple or complex criteria
 - remove feature columns based on arbitrary criteria (e.g. low variance features)
 - change feature column names at certain transformations (e.g. PCA)
+- needing outlier classification without removal (see `oulier_check`)
 - passing dynamic parameters to individual transforms of the pipeline
 - passing dataframes/arrays without worrying about converting to arrays and maintaining the proper feature columns
 - customizing backend for parallelization (e.g. Dask, Ray, loky, etc.)
@@ -163,6 +164,23 @@ class DataSieveMinMaxScaler(MinMaxScaler):
         return super().inverse_transform(X), y, sample_weight, feature_list
 ```
 
+
+## Outlier checking
+
+DataSieve also allows users to fit a pipeline that can be used to flag outliers in data *without* removing them from the dataset. This may be handy in a variety of cases where keeping the data point is important but having some indication of which points are outliers is also important. In order to use this functionality, you can take an already `fit` pipeline and call `transform(X, outlier_check=True)` which will return X as well as a vector of 1s and 0s indicating which points are outliers. This is demonstrated in the following example:
+
+```python
+pipeline = Pipeline([
+    ("pre_svm_scaler", transforms.DataSieveMinMaxScaler()),
+    ("svm", transforms.SVMOutlierExtractor())
+])
+
+pipeline.fit(X)
+
+X, outliers, _ = pipeline.transform(X, outlier_check=True)
+```
+
+Now X will *not* have any of the outlier data points removed, but the vector `outliers` will be an indication of which points were classified as outliers, where 0 means the point was an outlier and 1 means that the point was an inlier.
 
 
 # Installation

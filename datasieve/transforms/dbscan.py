@@ -64,7 +64,7 @@ class DataSieveDBSCAN(DBSCAN):
 
         return X, y, sample_weight, feature_list
 
-    def transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
+    def transform(self, X, y=None, sample_weight=None, feature_list=None, outlier_check=False, **kwargs):
         """
         Given a data point (or data points), append them to the
         train_features and determine if they are inliers.
@@ -79,12 +79,15 @@ class DataSieveDBSCAN(DBSCAN):
 
         inliers = np.where(clustering.labels_[-num_X:] == -1, 0, 1)
 
-        X, y, sample_weight = remove_outliers(X, y, sample_weight, inliers=inliers)
-
-        logger.info(
-            f"DBSCAN tossed {len(inliers) - X.shape[0]}"
-            f" train points from {len(self.labels_)} in transform()"
-        )
+        if not outlier_check:
+            X, y, sample_weight = remove_outliers(X, y, sample_weight, inliers=inliers)
+            logger.info(
+                f"DBSCAN tossed {len(inliers) - X.shape[0]}"
+                f" train points from {len(self.labels_)} in transform()"
+            )
+        else:
+            y += inliers
+            y -= 1
 
         return X, y, sample_weight, feature_list
 
