@@ -84,7 +84,7 @@ def test_check_outliers(dummy_array_without_nans):
     assert outliers.sum() < X.shape[0]
 
 
-def test_get_step(dummy_array_without_nans, dummy_array2_without_nans):
+def test_getitem(dummy_array_without_nans, dummy_array2_without_nans):
 
     pipeline = Pipeline([
         ("pre_svm_scaler", transforms.DataSieveMinMaxScaler(feature_range=(-1, 1))),
@@ -98,6 +98,6 @@ def test_get_step(dummy_array_without_nans, dummy_array2_without_nans):
 
     Y, _, _ = pipeline.transform(Y, outlier_check=True)
 
-    di_values = pipeline.get_step("di").di_values
+    di_values = pipeline["di"].di_values
 
     assert di_values.shape[0] == 100
