@@ -23,7 +23,8 @@ class DataSieveMinMaxScaler(MinMaxScaler):
         super().fit(X)
         return X, y, sample_weight, feature_list
 
-    def transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
+    def transform(self, X, y=None, sample_weight=None,
+                  feature_list=None, outlier_check=False, **kwargs):
         X = super().transform(X)
         return X, y, sample_weight, feature_list
 
