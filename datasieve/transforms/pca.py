@@ -29,7 +29,8 @@ class DataSievePCA(PCA):
         logger.info(f"explained variance {np.sum(self.explained_variance_ratio_)}")
         return X, y, sample_weight, self.feature_list
 
-    def transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
+    def transform(self, X, y=None, sample_weight=None,
+                  outlier_check=False, feature_list=None, **kwargs):
         X = super().transform(X)
         return X, y, sample_weight, self.feature_list
 
