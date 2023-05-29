@@ -29,7 +29,7 @@ class DataSieveVarianceThreshold(VarianceThreshold):
 
         return X, y, sample_weight, self.feature_list
 
-    def transform(self, X, y=None, sample_weight=None, outlier_check= False, feature_list=None):
+    def transform(self, X, y=None, sample_weight=None, outlier_check=False, feature_list=None):
 
         # use mask to filter X array
         X = X[:, self.mask]
