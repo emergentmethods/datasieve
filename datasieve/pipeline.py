@@ -1,5 +1,5 @@
 import logging
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 import numpy.typing as npt
 import pandas as pd
 import numpy as np
@@ -11,7 +11,7 @@ logger = logging.getLogger('datasieve.pipeline')
 class Pipeline:
 
     def __init__(self, steps: List[Tuple] = [],
-                 fitparams: dict[str, dict] = {}):
+                 fitparams: Dict[str, dict] = {}):
         """
         Pipeline object which holds a list of fit/transform objects.
         :param steps: list of tuples (str, transform())
@@ -19,18 +19,18 @@ class Pipeline:
         matches the str used to name the step in the steps list.
         """
         self.steps: List[Tuple] = steps
-        self.fitparams: dict[str, dict] = self._validate_fitparams(fitparams, steps)
+        self.fitparams: Dict[str, dict] = self._validate_fitparams(fitparams, steps)
         self.pandas_types: bool = False
         self.feature_list: list = []
         self.label_list: list = []
 
-    def _validate_fitparams(self, fitparams: dict[str, dict], steps: List[Tuple]):
+    def _validate_fitparams(self, fitparams: Dict[str, dict], steps: List[Tuple]):
         for _, (name, _) in enumerate(steps):
             if name not in fitparams.keys():
                 fitparams[name] = {}  # add an empty dict
 
         return fitparams
-    
+
     def __getitem__(self, name: str):
         for _, (step_name, step) in enumerate(self.steps):
             if step_name == name:
@@ -64,9 +64,10 @@ class Pipeline:
         return X, y, sample_weight
 
     def transform(self, X, y=None, sample_weight=None, outlier_check=False) -> Tuple[npt.ArrayLike,
-                                                                npt.ArrayLike,
-                                                                npt.ArrayLike]:
-        X, y, sample_weight = self._validate_arguments(X, y, sample_weight, outlier_check=outlier_check)
+                                                                                     npt.ArrayLike,
+                                                                                     npt.ArrayLike]:
+        X, y, sample_weight = self._validate_arguments(
+            X, y, sample_weight, outlier_check=outlier_check)
         feature_list = copy.deepcopy(self.feature_list)
 
         for _, (name, trans) in enumerate(self.steps):
