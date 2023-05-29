@@ -31,12 +31,13 @@ class Pipeline:
 
         return fitparams
     
-    def get_step(self, name: str):
+    def __getitem__(self, name: str):
         for _, (step_name, step) in enumerate(self.steps):
             if step_name == name:
                 return step
 
-        raise Exception(f"Step {name} not found in pipeline")
+        logger.warning(f"Could not find step {name} in pipeline, returning None")
+        return None
 
     def fit_transform(self, X, y=None, sample_weight=None) -> Tuple[npt.ArrayLike,
                                                                     npt.ArrayLike,
