@@ -76,7 +76,8 @@ class DataSieveDBSCAN(BaseTransform):
         fullX = np.concatenate([self.train_features, X], axis=0)
 
         with parallel_backend(self.backend, n_jobs=self.n_jobs):
-            logger.info(f"Using eps {self._skl.eps} and min_samples {self._skl.min_samples} to transform")
+            logger.info(f"Using eps {self._skl.eps} and min_samples"
+                        f"{self._skl.min_samples} to transform")
             clustering = self._skl.fit(fullX)
 
         inliers = np.where(clustering.labels_[-num_X:] == -1, 0, 1)
