@@ -1,4 +1,7 @@
 import datasieve.transforms as transforms
+from datasieve.transforms.sklearn_wrapper import SKLearnWrapper
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.feature_selection import VarianceThreshold
 
 
 def test_min_max_scaler(dummy_array_without_nans):
@@ -6,7 +9,7 @@ def test_min_max_scaler(dummy_array_without_nans):
     Test the min max scaler
     """
     X = dummy_array_without_nans.copy()
-    scaler = transforms.DataSieveMinMaxScaler(feature_range=(-1, 1))
+    scaler = SKLearnWrapper(MinMaxScaler(feature_range=(-1, 1)))
     X, _, _, _ = scaler.fit_transform(X)
     Y = dummy_array_without_nans.copy()
     Y, _, _, _ = scaler.transform(Y)

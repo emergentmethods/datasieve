@@ -5,11 +5,12 @@ from joblib import parallel_backend
 from sklearn.cluster import DBSCAN
 from sklearn.neighbors import NearestNeighbors
 from datasieve.utils import remove_outliers
+from datasieve.transforms.base_transform import BaseTransform
 
 logger = logging.getLogger('datasieve.pipeline')
 
 
-class DataSieveDBSCAN(DBSCAN):
+class DataSieveDBSCAN(BaseTransform):
     """
     A subclass of the SKLearn DBSCAN that ensures fit, transform, fit_transform and
     inverse_transform all take the full set of params X, y, sample_weight (even if they
@@ -22,7 +23,7 @@ class DataSieveDBSCAN(DBSCAN):
     """
 
     def __init__(self, backend="loky", n_jobs=-1, **kwargs) -> None:
-        super().__init__(**kwargs)
+        self._skl: DBSCAN = DBSCAN(**kwargs)
         self.train_features: npt.ArrayLike = np.array([])
         self.backend = backend
         self.n_jobs = n_jobs
@@ -38,13 +39,13 @@ class DataSieveDBSCAN(DBSCAN):
         # appends X to the self.train_features in order to determine
         # outliers, so we avoid that duplication by ensuring that
         # fit_transform simply uses the primary train_features only.
-        inliers = np.where(self.labels_ == -1, 0, 1)
+        inliers = np.where(self._skl.labels_ == -1, 0, 1)
 
         X, y, sample_weight = remove_outliers(X, y, sample_weight, inliers)
 
         logger.info(
             f"DBSCAN tossed {len(inliers) - X.shape[0]}"
-            f" train points from {len(self.labels_)} in fit_transform()"
+            f" train points from {len(self._skl.labels_)} in fit_transform()"
         )
 
         return X, y, sample_weight, feature_list
@@ -54,11 +55,11 @@ class DataSieveDBSCAN(DBSCAN):
         Given a set of training features, find the best
         epsilond and min_samples
         """
-        self.eps, self.min_samples = self.compute_epsilon_and_minpts(X)
-        logger.info(f"Found eps {self.eps} and min_samples {self.min_samples} in fit")
+        self._skl.eps, self._skl.min_samples = self.compute_epsilon_and_minpts(X)
+        logger.info(f"Found eps {self._skl.eps} and min_samples {self._skl.eps} in fit")
 
         with parallel_backend(self.backend, n_jobs=self.n_jobs):
-            super().fit(X)
+            self._skl.fit(X)
 
         self.train_features = X
 
@@ -75,8 +76,9 @@ class DataSieveDBSCAN(DBSCAN):
         fullX = np.concatenate([self.train_features, X], axis=0)
 
         with parallel_backend(self.backend, n_jobs=self.n_jobs):
-            logger.info(f"Using eps {self.eps} and min_samples {self.min_samples} to transform")
-            clustering = super().fit(fullX)
+            logger.info(f"Using eps {self._skl.eps} and min_samples"
+                        f"{self._skl.min_samples} to transform")
+            clustering = self._skl.fit(fullX)
 
         inliers = np.where(clustering.labels_[-num_X:] == -1, 0, 1)
 
@@ -84,7 +86,7 @@ class DataSieveDBSCAN(DBSCAN):
             X, y, sample_weight = remove_outliers(X, y, sample_weight, inliers=inliers)
             logger.info(
                 f"DBSCAN tossed {len(inliers) - X.shape[0]}"
-                f" train points from {len(self.labels_)} in transform()"
+                f" train points from {len(self._skl.labels_)} in transform()"
             )
         else:
             y += inliers
@@ -92,11 +94,11 @@ class DataSieveDBSCAN(DBSCAN):
 
         return X, y, sample_weight, feature_list
 
-    def inverse_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
-        """
-        Unused
-        """
-        return X, y, sample_weight, feature_list
+    # def inverse_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
+    #     """
+    #     Unused
+    #     """
+    #     return X, y, sample_weight, feature_list
 
     def compute_epsilon_and_minpts(self, X):
         """

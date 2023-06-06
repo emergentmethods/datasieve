@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "datasieve"
-version = "0.1.0"
+version = "0.1.1"
 description = "This package implements a flexible data pipeline to help organize row removal (e.g. outlier removal) and feature modification (e.g. PCA)"
 authors = ['Robert Caulk']
 readme = "README.md"
@@ -12,7 +12,7 @@ scikit-learn = ">=1.1.3"
 pandas = ">=1.3.3"
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.2.1"
+pytest = "^7.3.1"
 autopep8 = "1.6.0"
 flake8 = "^6.0.0"
 

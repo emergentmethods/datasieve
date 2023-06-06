@@ -23,6 +23,7 @@ class Pipeline:
         self.pandas_types: bool = False
         self.feature_list: list = []
         self.label_list: list = []
+        self.step_strings: list = []
 
     def _validate_fitparams(self, fitparams: Dict[str, dict], steps: List[Tuple]):
         for _, (name, _) in enumerate(steps):
@@ -38,6 +39,19 @@ class Pipeline:
 
         logger.warning(f"Could not find step {name} in pipeline, returning None")
         return None
+    
+    def append(self, step: Tuple[str, object], fitparams: dict = {}):
+        """
+        Append a step to the pipeline
+        :param step: tuple of (str, transform())
+        :param fitparams: dictionary of parameters to pass to fit
+        """
+        if step[0] in self.step_strings:
+            raise ValueError(f"Step name {step[0]} already exists in pipeline."
+                             "Ensure each step has a unique name.")
+        self.step_strings.append(step[0])
+        self.steps += [step]
+        self.fitparams[step[0]] = fitparams
 
     def fit_transform(self, X, y=None, sample_weight=None) -> Tuple[npt.ArrayLike,
                                                                     npt.ArrayLike,
