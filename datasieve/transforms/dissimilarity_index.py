@@ -1,5 +1,6 @@
 import logging
 from sklearn.metrics.pairwise import pairwise_distances
+from datasieve.transforms.base_transform import BaseTransform
 import numpy as np
 import numpy.typing as npt
 from joblib import parallel_backend
@@ -8,7 +9,7 @@ from datasieve.utils import remove_outliers
 logger = logging.getLogger('datasieve.pipeline')
 
 
-class DissimilarityIndex:
+class DissimilarityIndex(BaseTransform):
     """
     Object designed for computing the dissimilarity index for a set of training data and
     prediction points. fit() computes the avg_mean distance for the training data and

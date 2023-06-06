@@ -1,14 +1,15 @@
 import logging
 import numpy as np
 from sklearn.feature_selection import VarianceThreshold
+from datasieve.transforms.base_transform import BaseTransform
 
 logger = logging.getLogger('datasieve.pipeline')
 
 
-class DataSieveVarianceThreshold(VarianceThreshold):
+class DataSieveVarianceThreshold(BaseTransform):
 
     def __init__(self, **kwargs) -> None:
-        super().__init__(**kwargs)
+        self._skl: VarianceThreshold = VarianceThreshold(**kwargs)
         self.feature_list: list = []
         self.mask = None
 
@@ -17,8 +18,8 @@ class DataSieveVarianceThreshold(VarianceThreshold):
         return self.transform(X, y, sample_weight, feature_list)
 
     def fit(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
-        super().fit(X)
-        self.mask = self.get_support()
+        self._skl.fit(X)
+        self.mask = self._skl.get_support()
         if feature_list is not None:
             self.feature_list = np.array(feature_list)[self.mask]
             logger.info("Variance will remove features "

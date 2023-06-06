@@ -1,7 +1,9 @@
 from datasieve.pipeline import Pipeline
-import datasieve.transforms as transforms
+import datasieve.transforms as ts
 from conftest import extract_features_and_labels, set_weights_higher_recent
 import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+from datasieve.transforms.sklearn_wrapper import SKLearnWrapper
 
 
 def test_pipeline_df_different_features_in_out(dummy_df_without_nans):
@@ -10,12 +12,12 @@ def test_pipeline_df_different_features_in_out(dummy_df_without_nans):
     """
 
     pipeline = Pipeline([
-        ("detect_constants", transforms.DataSieveVarianceThreshold(threshold=0)),
-        ("pre_svm_scaler", transforms.DataSieveMinMaxScaler(feature_range=(-1, 1))),
-        ("svm", transforms.SVMOutlierExtractor()),
-        ("pre_pca_scaler", transforms.DataSieveMinMaxScaler(feature_range=(-1, 1))),
-        ("pca", transforms.DataSievePCA(n_components=0.95)),
-        ("post_pca_scaler", transforms.DataSieveMinMaxScaler(feature_range=(-1, 1)))
+        ("detect_constants", ts.DataSieveVarianceThreshold(threshold=0)),
+        ("pre_svm_scaler", SKLearnWrapper(MinMaxScaler(feature_range=(-1, 1)))),
+        ("svm", ts.SVMOutlierExtractor()),
+        ("pre_pca_scaler", SKLearnWrapper(MinMaxScaler(feature_range=(-1, 1)))),
+        ("pca", ts.DataSievePCA(n_components=0.95)),
+        ("post_pca_scaler", SKLearnWrapper(MinMaxScaler(feature_range=(-1, 1))))
     ])
 
     df = dummy_df_without_nans.copy()
@@ -32,8 +34,8 @@ def test_pipeline_df_different_features_in_out(dummy_df_without_nans):
 
 def test_pipeline_df_same_features_in_out(dummy_df_without_nans):
     pipeline = Pipeline([
-        ("pre_svm_scaler", transforms.DataSieveMinMaxScaler()),
-        ("svm", transforms.SVMOutlierExtractor())
+        ("pre_svm_scaler", SKLearnWrapper(MinMaxScaler(feature_range=(-1, 1)))),
+        ("svm", ts.SVMOutlierExtractor())
     ])
 
     df = dummy_df_without_nans.copy()
@@ -49,8 +51,8 @@ def test_pipeline_df_same_features_in_out(dummy_df_without_nans):
 
 def test_pipeline_array_in_out(dummy_array_without_nans):
     pipeline = Pipeline([
-        ("pre_svm_scaler", transforms.DataSieveMinMaxScaler()),
-        ("svm", transforms.SVMOutlierExtractor())
+        ("pre_svm_scaler", SKLearnWrapper(MinMaxScaler(feature_range=(-1, 1)))),
+        ("svm", ts.SVMOutlierExtractor())
     ])
 
     X = dummy_array_without_nans.copy()
@@ -69,8 +71,8 @@ def test_check_outliers(dummy_array_without_nans):
     """
 
     pipeline = Pipeline([
-        ("pre_svm_scaler", transforms.DataSieveMinMaxScaler(feature_range=(-1, 1))),
-        ("svm", transforms.SVMOutlierExtractor(nu=0.01, shuffle=True, random_state=42))
+        ("pre_svm_scaler", SKLearnWrapper(MinMaxScaler(feature_range=(-1, 1)))),
+        ("svm", ts.SVMOutlierExtractor(nu=0.01, shuffle=True, random_state=42))
     ])
 
     X = dummy_array_without_nans.copy()
@@ -87,8 +89,8 @@ def test_check_outliers(dummy_array_without_nans):
 def test_getitem(dummy_array_without_nans, dummy_array2_without_nans):
 
     pipeline = Pipeline([
-        ("pre_svm_scaler", transforms.DataSieveMinMaxScaler(feature_range=(-1, 1))),
-        ("di", transforms.DissimilarityIndex(di_threshold=0.9))
+        ("pre_svm_scaler", SKLearnWrapper(MinMaxScaler(feature_range=(-1, 1)))),
+        ("di", ts.DissimilarityIndex(di_threshold=0.9))
     ])
 
     X = dummy_array_without_nans.copy()

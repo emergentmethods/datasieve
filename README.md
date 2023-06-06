@@ -6,7 +6,7 @@ DataSieve is very similar to the SKlearn Pipeline in that it:
 - transforms subsequent arrays of the same dimension according to the fit from the original X
 - inverse transforms arrays by inverting the series of transformations
 
-This means that it follows the SKLearn API very closely, and in fact most of the methods inherit directly from SKLearn methods.
+This means that it follows the SKLearn API very closely, and in fact users can use SKLearn transforms directly without making any modifications.
 
 The main **difference** is that DataSieve allows for the manipulation of the y and sample_weight arrays in addition to the X array. This is useful if you find yourself wishing to use the SKLearn pipeline for:
 
@@ -20,66 +20,21 @@ The main **difference** is that DataSieve allows for the manipulation of the y a
 
 These improved flexibilities allow for more customized/creative transformations. For example, the included `DataSieveDBSCAN` has automated parameter fitting and outlier removal based on clustering. 
 
-An example would be someone who wants to use `SGDOneClassSVM` to detect and remove outliers from their data set before training:
 
-```python
-class SVMOutlierExtractor(SGDOneClassSVM):
-    """
-    A subclass of the SKLearn SGDOneClassSVM that adds a transform() method
-    for removing detected outliers from X (as well as the associated y and
-    sample_weight if they are also furnished.
-    """
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    def fit_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
-        self.fit(X, y, sample_weight=sample_weight)
-        return self.transform(X, y, sample_weight=sample_weight)
-
-    def fit(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
-        super().fit(X, y=y, sample_weight=sample_weight)
-        return X, y, sample_weight, feature_list
-
-    def transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
-        y_pred = self.predict(X)
-
-        X, y, sample_weight = remove_outliers(X, y, sample_weight, y_pred)
-
-        num_tossed = len(y_pred) - len(X)
-        if num_tossed > 0:
-            logger.info(
-                f"SVM detected {num_tossed} data points "
-                "as outliers."
-            )
-
-        return X, y, sample_weight, feature_list
-
-    def inverse_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
-        """
-        Unused, pass through X, y, sample_weight, and feature_list
-        """
-        return X, y, sample_weight, feature_list
-```
-
-
-As shown here, the `fit()` method is actually identical to the SKLearn `fit()` method, but the `transform()` removes data points from X, y, and sample_weight for any outliers detected in the `X` array.
-
-
-# Usage
-The user builds the pipeline similarly to SKLearn:
+## Usage
+The user builds the pipeline similarly to SKLearn, and can even use SKLearn transforms directly with the `SKLearnWrapper`:
 
 ```python
     from datasieve.pipeline import Pipeline
     from datasieve.transforms import DataSieveMinMaxScaler, DataSievePCA, DataSieveVarianceThreshold, SVMOutlierExtractor
+    from datasieve.transforms import SKlearnWrapper
 
     feature_pipeline = Pipeline([
         ("detect_constants", DataSieveVarianceThreshold(threshold=0)),
-        ("pre_svm_scaler", DataSieveMinMaxScaler(feature_range=(-1, 1))),
+        ("pre_svm_scaler", SKlearnWrapper(MinMaxScaler(feature_range=(-1, 1)))),
         ("svm", SVMOutlierExtractor()),
-        ("pre_pca_scaler", DataSieveMinMaxScaler(feature_range=(-1, 1))),
-        ("pca", DataSievePCA(n_components=0.95),
-        ("post_pca_scaler", DataSieveMinMaxScaler(feature_range=(-1, 1)))
+        ("pca", DataSievePCA(n_components=0.95)),
+        ("post_pca_scaler", SKlearnWrapper(MinMaxScaler(feature_range=(-1, 1))))
     ])
 
 ```
@@ -96,7 +51,6 @@ Next, the `feature_pipeline` can then be used to transform other datasets with t
 
 ```python
 X2, _, _ = feature_pipeline.transform(X2)
-
 ```
 
 Finally, similar to SKLearn's pipeline, the `feature_pipeline` can be used to inverse_transform an array `X3` array that has the same dimensions as the returned `X` array from the pipeline:
@@ -104,6 +58,58 @@ Finally, similar to SKLearn's pipeline, the `feature_pipeline` can be used to in
 ```python
 Xinv, _ ,_ = feature_pipeline.inverse_transform(X)
 ```
+
+
+## Creating a custom transform
+
+An example would be someone who wants to use `SGDOneClassSVM` to detect and remove outliers from their data set before training:
+
+```python
+class SVMOutlierExtractor(BaseTransform):
+    """
+    A subclass of the SKLearn SGDOneClassSVM that adds a transform() method
+    for removing detected outliers from X (as well as the associated y and
+    sample_weight if they are also furnished.
+    """
+
+    def __init__(self, **kwargs):
+        self._skl = SGDOneClassSVM(**kwargs)
+
+    def fit_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
+        self.fit(X, y, sample_weight=sample_weight)
+        return self.transform(X, y, sample_weight, feature_list)
+
+    def fit(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
+        self._skl.fit(X, y=y, sample_weight=sample_weight)
+        return X, y, sample_weight, feature_list
+
+    def transform(self, X, y=None, sample_weight=None, feature_list=None,
+                  outlier_check=False, **kwargs):
+        y_pred = self._skl.predict(X)
+        y_pred = np.where(y_pred == -1, 0, y_pred)
+        if not outlier_check:
+            X, y, sample_weight = remove_outliers(X, y, sample_weight, y_pred)
+            num_tossed = len(y_pred) - len(X)
+            if num_tossed > 0:
+                logger.info(
+                    f"SVM detected {num_tossed} data points "
+                    "as outliers."
+                )
+        else:
+            y += y_pred
+            y -= 1
+
+        return X, y, sample_weight, feature_list
+
+    def inverse_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
+        """
+        Unused
+        """
+        return X, y, sample_weight, feature_list
+```
+
+
+As shown here, the `fit()` method is actually identical to the SKLearn `fit()` method, but the `transform()` removes data points from X, y, and sample_weight for any outliers detected in the `X` array.
 
 ## Data removal
 
