@@ -1,7 +1,7 @@
 import datasieve.transforms as transforms
 from datasieve.transforms.sklearn_wrapper import SKLearnWrapper
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.feature_selection import VarianceThreshold
+import numpy as np
 
 
 def test_min_max_scaler(dummy_array_without_nans):
@@ -92,3 +92,17 @@ def test_svm_outlier_extractor(dummy_array_without_nans, dummy_array2_without_na
 
     assert X.shape[0] < dummy_array_without_nans.shape[0]
     assert Y.shape[0] == 81
+
+
+def test_noise(dummy_array_without_nans):
+    """
+    Test Noise
+    """
+    X = dummy_array_without_nans.copy()
+    noise = transforms.Noise()
+    Xnoisey, _, _, _ = noise.fit_transform(X)
+
+    Xtest, _, _, _ = noise.transform(dummy_array_without_nans)
+
+    assert np.sum(Xnoisey - dummy_array_without_nans) != 0.0
+    assert np.sum(Xtest - dummy_array_without_nans) == 0.0
