@@ -4,6 +4,7 @@ import numpy.typing as npt
 import pandas as pd
 import numpy as np
 import copy
+from datasieve.transforms.base_transform import BaseTransform
 
 logger = logging.getLogger('datasieve.pipeline')
 
@@ -39,7 +40,7 @@ class Pipeline:
 
         logger.warning(f"Could not find step {name} in pipeline, returning None")
         return None
-    
+
     def append(self, step: Tuple[str, object], fitparams: dict = {}):
         """
         Append a step to the pipeline
@@ -65,6 +66,7 @@ class Pipeline:
 
         for _, (name, trans) in enumerate(self.steps):
             logger.debug(f"Fit transforming {name}")
+            self._validate_step(trans)
             X, y, sample_weight, feature_list = trans.fit_transform(
                 X,
                 y,
@@ -86,6 +88,7 @@ class Pipeline:
 
         for _, (name, trans) in enumerate(self.steps):
             logger.debug(f"Transforming {name}")
+            self._validate_step(trans)
             X, y, sample_weight, feature_list = trans.transform(
                 X,
                 y,
@@ -105,6 +108,7 @@ class Pipeline:
 
         for _, (name, trans) in enumerate(self.steps):
             logger.debug(f"Fitting {name}")
+            self._validate_step(trans)
             X, y, sample_weight, feature_list = trans.fit(
                 X,
                 y,
@@ -123,6 +127,7 @@ class Pipeline:
 
         for _, (name, trans) in reversed(list(enumerate(self.steps))):
             logger.debug(f"Inverse Transforming {name}")
+            self._validate_step(trans)
             X, y, sample_weight, feature_list = trans.inverse_transform(
                 X,
                 y=y,
@@ -194,3 +199,16 @@ class Pipeline:
             y = pd.DataFrame(y, columns=self.label_list)
 
         return X, y, sample_weight
+
+    def _validate_step(cls, trans: BaseTransform):
+        """
+        Raise exception if `trans` is not a BaseTransform
+        class
+        """
+        if not isinstance(trans, BaseTransform):
+            raise Exception(
+                f"{trans} is not a BaseTransform class. If you are using"
+                "an SKLearn class, please wrap it inside the SKLearnWrapper()."
+            )
+
+        return

@@ -3,11 +3,16 @@ import pandas as pd
 from sklearn.metrics import pairwise_distances
 import numpy as np
 import logging
+import numpy.typing as npt
+from typing import Union
 
 logger = logging.getLogger('datasieve.utils')
 
 
-def remove_outliers(X, y=None, sample_weight=None, inliers=None):
+def remove_outliers(X: npt.ArrayLike,
+                    y: Union[npt.ArrayLike, None] = None,
+                    sample_weight: Union[npt.ArrayLike, None] = None,
+                    inliers: Union[npt.ArrayLike, None] = None):
     """
     Utility that takes 3 arrays and the outlier detection
     to remove data points equally across the 3 arrays

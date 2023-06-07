@@ -25,8 +25,8 @@ class SVMOutlierExtractor(BaseTransform):
         self._skl.fit(X, y=y, sample_weight=sample_weight)
         return X, y, sample_weight, feature_list
 
-    def transform(self, X, y=None, sample_weight=None, feature_list=None,
-                  outlier_check=False, **kwargs):
+    def transform(self, X, y=None, sample_weight=None,
+                  feature_list=None, outlier_check=False, **kwargs):
         y_pred = self._skl.predict(X)
         y_pred = np.where(y_pred == -1, 0, y_pred)
         if not outlier_check:
@@ -41,10 +41,4 @@ class SVMOutlierExtractor(BaseTransform):
             y += y_pred
             y -= 1
 
-        return X, y, sample_weight, feature_list
-
-    def inverse_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
-        """
-        Unused
-        """
         return X, y, sample_weight, feature_list

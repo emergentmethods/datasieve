@@ -1,4 +1,4 @@
-from sklearn.decomposition import PCA
+from sklearn import decomposition
 from datasieve.transforms.base_transform import BaseTransform
 import logging
 import numpy as np
@@ -6,19 +6,15 @@ import numpy as np
 logger = logging.getLogger('datasieve.pipeline')
 
 
-class DataSievePCA(BaseTransform):
+class PCA(BaseTransform):
     """
     A subclass of the SKLearn PCA that ensures fit, transform, fit_transform and
     inverse_transform all take the full set of params X, y, sample_weight (even if they
     are unused) to follow the FlowdaptPipeline API.
     """
 
-    def __init__(self, n_components=0.9999, **kwargs):
-        self._skl = PCA(n_components=n_components, **kwargs)
-
-    def fit_transform(self, X, y=None, sample_weight=None, feature_list=None):
-        X, y, sample_weight, feature_list = self.fit(X, y, sample_weight, feature_list)
-        return self.transform(X, y, sample_weight, feature_list)
+    def __init__(self, **kwargs):
+        self._skl: decomposition.PCA = decomposition.PCA(**kwargs)
 
     def fit(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
         n_components = X.shape[1]

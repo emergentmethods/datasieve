@@ -25,12 +25,6 @@ class DissimilarityIndex(BaseTransform):
         self.n_jobs = n_jobs
         self.backend = backend
 
-    def fit_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
-        self.fit(X, y, sample_weight)
-        X, y, sample_weight, feature_list = self.transform(
-            X, y, sample_weight, feature_list)
-        return X, y, sample_weight, feature_list
-
     def fit(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
         """
         Compute the distances, save the average mean distance
@@ -76,10 +70,4 @@ class DissimilarityIndex(BaseTransform):
                 "being too far from training data."
             )
 
-        return X, y, sample_weight, feature_list
-
-    def inverse_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
-        """
-        Unused
-        """
         return X, y, sample_weight, feature_list
