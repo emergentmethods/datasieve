@@ -5,7 +5,7 @@ import numpy as np
 class Noise(BaseTransform):
     """
     Add noise to the train features only. Anything that passes through `transform` remains
-    untouched. This makes this step unique in the sense that `fit_transform()` is the 
+    untouched. This makes this step unique in the sense that `fit_transform()` is the
     only way to apply noise to the train features.
     """
     def __init__(self, mu=0, sigma=0.01, **kwargs):
