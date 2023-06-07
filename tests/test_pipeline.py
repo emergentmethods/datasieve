@@ -12,11 +12,11 @@ def test_pipeline_df_different_features_in_out(dummy_df_without_nans):
     """
 
     pipeline = Pipeline([
-        ("detect_constants", ts.DataSieveVarianceThreshold(threshold=0)),
+        ("detect_constants", ts.VarianceThreshold(threshold=0)),
         ("pre_svm_scaler", SKLearnWrapper(MinMaxScaler(feature_range=(-1, 1)))),
         ("svm", ts.SVMOutlierExtractor()),
         ("pre_pca_scaler", SKLearnWrapper(MinMaxScaler(feature_range=(-1, 1)))),
-        ("pca", ts.DataSievePCA(n_components=0.95)),
+        ("pca", ts.PCA(n_components=0.95)),
         ("post_pca_scaler", SKLearnWrapper(MinMaxScaler(feature_range=(-1, 1))))
     ])
 

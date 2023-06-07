@@ -2,7 +2,7 @@ import logging
 import numpy as np
 import numpy.typing as npt
 from joblib import parallel_backend
-from sklearn.cluster import DBSCAN
+from sklearn import cluster
 from sklearn.neighbors import NearestNeighbors
 from datasieve.utils import remove_outliers
 from datasieve.transforms.base_transform import BaseTransform
@@ -10,11 +10,11 @@ from datasieve.transforms.base_transform import BaseTransform
 logger = logging.getLogger('datasieve.pipeline')
 
 
-class DataSieveDBSCAN(BaseTransform):
+class DBSCAN(BaseTransform):
     """
-    A subclass of the SKLearn DBSCAN that ensures fit, transform, fit_transform and
+    A custom DBSCAN transform with a fit, transform, fit_transform and
     inverse_transform all take the full set of params X, y, sample_weight (even if they
-    are unused) to follow the FlowdaptPipeline API.
+    are unused) to follow the Pipeline API.
 
     fit() automatically finds the optimal epsilon and min_samples for a set of train_features
     transform() appends datapoints to the train_features, using the same epsilon and
@@ -23,7 +23,7 @@ class DataSieveDBSCAN(BaseTransform):
     """
 
     def __init__(self, backend="loky", n_jobs=-1, **kwargs) -> None:
-        self._skl: DBSCAN = DBSCAN(**kwargs)
+        self._skl: cluster.DBSCAN = cluster.DBSCAN(**kwargs)
         self.train_features: npt.ArrayLike = np.array([])
         self.backend = backend
         self.n_jobs = n_jobs
@@ -65,8 +65,8 @@ class DataSieveDBSCAN(BaseTransform):
 
         return X, y, sample_weight, feature_list
 
-    def transform(self, X, y=None, sample_weight=None, feature_list=None,
-                  outlier_check=False, **kwargs):
+    def transform(self, X, y=None, sample_weight=None,
+                  feature_list=None, outlier_check=False, **kwargs):
         """
         Given a data point (or data points), append them to the
         train_features and determine if they are inliers.
@@ -93,12 +93,6 @@ class DataSieveDBSCAN(BaseTransform):
             y -= 1
 
         return X, y, sample_weight, feature_list
-
-    # def inverse_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
-    #     """
-    #     Unused
-    #     """
-    #     return X, y, sample_weight, feature_list
 
     def compute_epsilon_and_minpts(self, X):
         """

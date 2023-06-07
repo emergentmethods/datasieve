@@ -18,7 +18,7 @@ The main **difference** is that DataSieve allows for the manipulation of the y a
 - passing dataframes/arrays without worrying about converting to arrays and maintaining the proper feature columns
 - customizing backend for parallelization (e.g. Dask, Ray, loky, etc.)
 
-These improved flexibilities allow for more customized/creative transformations. For example, the included `DataSieveDBSCAN` has automated parameter fitting and outlier removal based on clustering. 
+These improved flexibilities allow for more customized/creative transformations. For example, the included `DBSCAN` has automated parameter fitting and outlier removal based on clustering. 
 
 
 ## Usage
@@ -26,15 +26,15 @@ The user builds the pipeline similarly to SKLearn, and can even use SKLearn tran
 
 ```python
     from datasieve.pipeline import Pipeline
-    from datasieve.transforms import DataSieveMinMaxScaler, DataSievePCA, DataSieveVarianceThreshold, SVMOutlierExtractor
-    from datasieve.transforms import SKlearnWrapper
+    import datasieve.transforms as dst
+    from sklearn.preprocessing import MinMaxScaler
 
     feature_pipeline = Pipeline([
-        ("detect_constants", DataSieveVarianceThreshold(threshold=0)),
-        ("pre_svm_scaler", SKlearnWrapper(MinMaxScaler(feature_range=(-1, 1)))),
-        ("svm", SVMOutlierExtractor()),
-        ("pca", DataSievePCA(n_components=0.95)),
-        ("post_pca_scaler", SKlearnWrapper(MinMaxScaler(feature_range=(-1, 1))))
+        ("detect_constants", dst.VarianceThreshold(threshold=0)),
+        ("pre_svm_scaler", dst.SKlearnWrapper(MinMaxScaler(feature_range=(-1, 1)))),
+        ("svm", dst.SVMOutlierExtractor()),
+        ("pca", dst.PCA(n_components=0.95)),
+        ("post_pca_scaler", dst.SKlearnWrapper(MinMaxScaler(feature_range=(-1, 1))))
     ])
 
 ```
@@ -45,18 +45,18 @@ Once the pipeline is built, it can be fit and transformed similar to a SKLearn p
 X, y, sample_weight = feature_pipeline.fit_transform(X, y, sample_weight)
 ```
 
-This pipeline demonstrates the various components of `DataSieve` which are missing from SKLearn's pipeline. A dataframe `X` (if desired, else users can input a simply array without column names) is input with its associated `y` and `sample_weight` arrays/vectors. The `VarianceThreshold` will first detect and remove any features that have zero variance in X, the `SVMOutlierExtractor` will fit `SGDOneClassSVM` to `X` and then remove the detected outliers in `X`, while also propagating those row removals from `y` and `sample_weight`. Finally, the `PCA` will be fit to the remaining `X` array with the features count changing and getting renamed. The returned `X` dataframe will have the correctly named column features/count, and equal row counts across the `X`, `y`, and `sample_weight` arrays.
+This pipeline demonstrates the various components of `DataSieve` which are missing from SKLearn's pipeline. A dataframe `X` (if desired, else users can input a numpy array without column names) is input with its associated `y` and `sample_weight` arrays/vectors (these are also optional). The `VarianceThreshold` will first detect and remove any features that have zero variance in X, the `SVMOutlierExtractor` will fit `SGDOneClassSVM` to `X` and then remove the detected outliers in `X`, while also propagating those row removals from `y` and `sample_weight`. Finally, the `PCA` will be fit to the remaining `X` array with the features count changing and getting renamed. The returned `X` dataframe will have the correctly named column features/count, and equal row counts across the `X`, `y`, and `sample_weight` arrays.
 
 Next, the `feature_pipeline` can then be used to transform other datasets with the same input feature dimension:
 
 ```python
-X2, _, _ = feature_pipeline.transform(X2)
+Xprime, _, _ = feature_pipeline.transform(X2)
 ```
 
-Finally, similar to SKLearn's pipeline, the `feature_pipeline` can be used to inverse_transform an array `X3` array that has the same dimensions as the returned `X` array from the pipeline:
+Finally, similar to SKLearn's pipeline, the `feature_pipeline` can be used to inverse_transform the array `Xprime` array that has the same dimensions as the returned `X2`/`X` array from the pipeline:
 
 ```python
-Xinv, _ ,_ = feature_pipeline.inverse_transform(X)
+X2, _ ,_ = feature_pipeline.inverse_transform(Xprime)
 ```
 
 
@@ -113,30 +113,43 @@ As shown here, the `fit()` method is actually identical to the SKLearn `fit()` m
 
 ## Data removal
 
-The command `feature_pipeline.fit_transform(X, y, sample_weight)` fits each pipeline step to `X`, and transforms `X` according to each step's `transform()` method. In some cases, this will not affect `y` or `sample_weight`. For example, `FlowdaptMinMaxScaler` simply scales `X` and saves the normalization information.  Meanwhile, in the `SVMOutlierExtractor`, `.fit()` will fit an SVM to `X` and `.transform()` will remove any detected outliers from `X`. Typical `Scikit-Learn` pipelines do not remove those data points from `y` and `sample_weight`. Luckily, the `FlowdaptPipeline` takes care of the "associated removal" of the same outlier data points from `y` and `sample_weight`. 
+The command `feature_pipeline.fit_transform(X, y, sample_weight)` fits each pipeline step to `X`, and transforms `X` according to each step's `transform()` method. In some cases, this will not affect `y` or `sample_weight`. For example, `MinMaxScaler` simply scales `X` and saves the normalization information.  Meanwhile, in the `SVMOutlierExtractor`, `.fit()` will fit an SVM to `X` and `.transform()` will remove any detected outliers from `X`. Typical `Scikit-Learn` pipelines do not remove those data points from `y` and `sample_weight`. Luckily, the `Pipeline` takes care of the "associated removal" of the same outlier data points from `y` and `sample_weight`. 
 
 ## Feature modification
 
-Another feature is demonstrated in the `FlowdaptPCA`, which fits a PCA transform to `X` and then transforms `X` to principal components. This dimensionality reduction means that the features are no longer the same, instead they are now `PC1`, `PC2` ... `PCX`. `FlowdaptPipeline` handles the feature renaming at that step (which is not a feature available in the `Scikit-Learn` pipeline). Similar to `FlowdaptPCA`, the `FlowdaptVarianceThreshold` subclasses the `Scikit-Learn` `VarianceThreshold` which is geared toward removing features that have a low variance. `FlowdaptVarianceThreshold` ensures that the removed features are properly handled when `X` passes through this part of the pipeline.
+Another feature is demonstrated in the `PCA`, which fits a PCA transform to `X` and then transforms `X` to principal components. This dimensionality reduction means that the features are no longer the same, instead they are now `PC1`, `PC2` ... `PCX`. `Pipeline` handles the feature renaming at that step (which is not a feature available in the `Scikit-Learn` pipeline). Similar to `FlowdaptPCA`, the `VarianceThreshold` subclasses the `Scikit-Learn` `VarianceThreshold` which is geared toward removing features that have a low variance. `VarianceThreshold` ensures that the removed features are properly handled when `X` passes through this part of the pipeline.
 
 ## Adding a custom step
 
 Each step of the `Pipeline` *must* contain the following methods:
 
 ```python
-class MyTransformer:
+class MyTransformer(BaseTransform):
     def fit_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
+        """
+        This method is defined by default by the BaseTransform class. But users can override
+        to do something unique (see DBSCAN where this is particularly useful.)
+        """
         X, y, sample_weight = self.fit(X, y, sample_weight)
-        X, y, sample_weight = self.transform(X, y, sample_weight)
-        return X, y, sample_weight, feature_list
+        return self.transform(X, y, sample_weight)
 
     def fit(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
+        """
+        Some fun fitting method
+        """
         return X, y, sample_weight, feature_list
 
     def transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
+        """
+        Transformation of X or y or sample_weight or all three, anything the user
+        wants.
+        """
         return X, y, sample_weight, feature_list
 
     def inverse_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
+        """
+        The inverse transform - it is defined like this by default in BaseTransform class
+        """
         return X, y, sample_weight, feature_list
 ```
 
