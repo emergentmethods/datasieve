@@ -6,7 +6,11 @@ from joblib import parallel_backend
 class SKLearnWrapper(BaseTransform):
     """
     Wrapper that takes *most* SKLearn transforms and allows them to
-    work wiith the datasieve pipeline
+    work with the datasieve pipeline
+    :param sklearninstance: Any instantiated SKLearn transform, e.g. MinMaxScaler()
+    :param n_jobs: if transform is parallelizable, will use this as the number of threads
+    :param backed: if the transform is occurring in a special environment, it may benefit
+        from backends such as "dask"
     """
     def __init__(self, sklearninstance: BaseEstimator, n_jobs=-1, backend="loky", **kwargs):
         self.backend = backend
