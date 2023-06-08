@@ -8,9 +8,8 @@ logger = logging.getLogger('datasieve.pipeline')
 
 class PCA(BaseTransform):
     """
-    A subclass of the SKLearn PCA that ensures fit, transform, fit_transform and
-    inverse_transform all take the full set of params X, y, sample_weight (even if they
-    are unused) to follow the FlowdaptPipeline API.
+    A PCA that ensures the feature names are properly transformed and follow
+    along with the X throughout the pipeline.
     """
 
     def __init__(self, **kwargs):
