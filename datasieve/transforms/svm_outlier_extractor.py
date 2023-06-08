@@ -9,9 +9,8 @@ logger = logging.getLogger('datasieve.pipeline')
 
 class SVMOutlierExtractor(BaseTransform):
     """
-    A subclass of the SKLearn SGDOneClassSVM that adds a transform() method
-    for removing detected outliers from X (as well as the associated y and
-    sample_weight if they are also furnished.
+    A transform that uses SGDOneClassSVM to detect and remove outlier datapoints
+    from X, and follows through to remove the same points from y and sample_weights
     """
 
     def __init__(self, **kwargs):
