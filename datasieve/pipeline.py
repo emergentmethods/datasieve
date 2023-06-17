@@ -41,6 +41,13 @@ class Pipeline:
         logger.warning(f"Could not find step {name} in pipeline, returning None")
         return None
 
+    def __contains__(self, name: str):
+        for _, (step_name, _) in enumerate(self.steps):
+            if step_name == name:
+                return True
+
+        return False
+
     def append(self, step: Tuple[str, object], fitparams: dict = {}):
         """
         Append a step to the pipeline
