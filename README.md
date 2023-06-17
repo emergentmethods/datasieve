@@ -1,3 +1,5 @@
+![datasieve-logo](assets/datasieve_logo.png)
+
 # DataSieve
 
 DataSieve is very similar to the SKlearn Pipeline in that it:
@@ -118,70 +120,6 @@ The command `feature_pipeline.fit_transform(X, y, sample_weight)` fits each pipe
 ## Feature modification
 
 Another feature is demonstrated in the `PCA`, which fits a PCA transform to `X` and then transforms `X` to principal components. This dimensionality reduction means that the features are no longer the same, instead they are now `PC1`, `PC2` ... `PCX`. `Pipeline` handles the feature renaming at that step (which is not a feature available in the `Scikit-Learn` pipeline). Similar to `FlowdaptPCA`, the `VarianceThreshold` subclasses the `Scikit-Learn` `VarianceThreshold` which is geared toward removing features that have a low variance. `VarianceThreshold` ensures that the removed features are properly handled when `X` passes through this part of the pipeline.
-
-## Adding a custom step
-
-Each step of the `Pipeline` *must* contain the following methods:
-
-```python
-class MyTransformer(BaseTransform):
-    def fit_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
-        """
-        This method is defined by default by the BaseTransform class. But users can override
-        to do something unique (see DBSCAN where this is particularly useful.)
-        """
-        X, y, sample_weight = self.fit(X, y, sample_weight)
-        return self.transform(X, y, sample_weight)
-
-    def fit(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
-        """
-        Some fun fitting method
-        """
-        return X, y, sample_weight, feature_list
-
-    def transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
-        """
-        Transformation of X or y or sample_weight or all three, anything the user
-        wants.
-        """
-        return X, y, sample_weight, feature_list
-
-    def inverse_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
-        """
-        The inverse transform - it is defined like this by default in BaseTransform class
-        """
-        return X, y, sample_weight, feature_list
-```
-
-This is because these four methods are called automatically by the `Pipeline` object. In most cases, the goal is to add functionality for an existing transformer from the `Scikit-Learn` library. Here is an example of subclassing the `MinMaxScaler` to work with the `FlowdaptPipeline`:
-
-```python
-class DataSieveMinMaxScaler(MinMaxScaler):
-    """
-    A subclass of the SKLearn MinMaxScaler that ensures fit, transform, fit_transform and
-    inverse_transform all take the full set of params X, y, sample_weight (even if they
-    are unused) to follow the FlowdaptPipeline API.
-    """
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-    def fit_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
-        super().fit(X)
-        X = super().transform(X)
-        return X, y, sample_weight, feature_list
-
-    def fit(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
-        super().fit(X)
-        return X, y, sample_weight, feature_list
-
-    def transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
-        X = super().transform(X)
-        return X, y, sample_weight, feature_list
-
-    def inverse_transform(self, X, y=None, sample_weight=None, feature_list=None, **kwargs):
-        return super().inverse_transform(X), y, sample_weight, feature_list
-```
 
 
 ## Outlier checking
