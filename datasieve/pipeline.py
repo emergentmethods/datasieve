@@ -152,21 +152,22 @@ class Pipeline:
         if isinstance(X, pd.DataFrame) and fit:
             self.pandas_types = True
             self.feature_list = X.columns
+            self.features_in = X.columns
             if y is not None:
                 self.label_list = y.columns
         elif fit:
             self.pandas_types = False
-            self.feature_list = list(np.arange(0, X.shape[1]))
+            self.features_in = list(np.arange(0, X.shape[1]))
             if y is not None:
                 if len(y.shape) > 1:
                     self.label_list = list(np.arange(0, y.shape[1]))
                 else:
                     self.label_list = [0]
         elif isinstance(X, pd.DataFrame) and not fit:
-            if list(X.columns) != list(self.feature_list):
-                raise Exception(f"Pipeline expected {self.feature_list} but got {X.columns}.")
+            if list(X.columns) != list(self.features_in):
+                raise Exception(f"Pipeline expected {self.features_in} but got {X.columns}.")
         elif not isinstance(X, pd.DataFrame) and not fit and self.pandas_types:
-            X = pd.DataFrame(X, columns=self.feature_list)
+            X = pd.DataFrame(X, columns=self.features_in)
 
         if self.pandas_types:
             try:

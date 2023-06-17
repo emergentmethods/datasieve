@@ -23,9 +23,11 @@ class VarianceThreshold(BaseTransform):
         self.mask = self._skl.get_support()
         if feature_list is not None:
             self.feature_list = np.array(feature_list)[self.mask]
-            logger.info("Variance will remove features "
-                        f"{len(feature_list) - len(self.feature_list)} "
-                        f"on transform. {np.array(feature_list)[~self.mask]}")
+            if len(feature_list) - len(self.feature_list) > 0:
+                logger.info("VarianceThreshold will remove "
+                            f"{len(feature_list) - len(self.feature_list)} "
+                            "features from the dataset."
+                            f"on transform. {np.array(feature_list)[~self.mask]}")
         else:
             self.feature_list = None
 
