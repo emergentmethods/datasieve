@@ -105,7 +105,7 @@ class Pipeline:
                 **self.fitparams[name]
             )
 
-        X, y, sample_weight = self._convert_back_to_df(X, y, sample_weight, feature_list)
+        X, y, sample_weight = self._convert_back_to_df(X, y, sample_weight, feature_list, outlier_check)
 
         return X, y, sample_weight
 
@@ -195,7 +195,7 @@ class Pipeline:
 
         return X, y, sample_weight
 
-    def _convert_back_to_df(self, X, y, sample_weight, feature_list):
+    def _convert_back_to_df(self, X, y, sample_weight, feature_list, outlier_check=False):
         if not self.pandas_types:
             return X, y, sample_weight
 
@@ -203,7 +203,7 @@ class Pipeline:
 
         X = pd.DataFrame(X, columns=feature_list)
 
-        if y is not None:
+        if y is not None and not outlier_check:
             y = pd.DataFrame(y, columns=self.label_list)
 
         return X, y, sample_weight
