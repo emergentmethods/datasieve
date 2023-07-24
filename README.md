@@ -69,7 +69,7 @@ An example would be someone who wants to use `SGDOneClassSVM` to detect and remo
 ```python
 class SVMOutlierExtractor(BaseTransform):
     """
-    A subclass of the SKLearn SGDOneClassSVM that adds a transform() method
+    A wrapper on SKLearn SGDOneClassSVM that adds a transform() method
     for removing detected outliers from X (as well as the associated y and
     sample_weight if they are also furnished.
     """
