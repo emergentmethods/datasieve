@@ -56,7 +56,7 @@ def find_training_horizon(df: pd.DataFrame, target_horizon, test_pct=0.05,
             current_window_distances = pairwise_distances(
                 current_window, metric="euclidean", n_jobs=8)
             # remove the diagonal distances which are itself distances ~0
-            # np.fill_diagonal(current_window_distances, np.NaN)
+            # np.fill_diagonal(current_window_distances, np.nan)
             current_window_distances = current_window_distances.reshape(-1, 1)
             std_train_dist = current_window_distances[~np.isnan(current_window_distances)].std()
             distances_horizon_current_window = pairwise_distances(
