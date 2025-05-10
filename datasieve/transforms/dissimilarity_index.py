@@ -35,7 +35,7 @@ class DissimilarityIndex(BaseTransform):
             pairwise = pairwise_distances(X)
 
         # remove the diagonal distances which are itself distances ~0
-        np.fill_diagonal(pairwise, np.NaN)
+        np.fill_diagonal(pairwise, np.nan)
         pairwise = pairwise.reshape(-1, 1)
         self.avg_mean_dist = pairwise[~np.isnan(pairwise)].mean()
         self.trained_data = X
